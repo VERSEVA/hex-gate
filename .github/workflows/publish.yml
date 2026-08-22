@@ -1,0 +1,24 @@
+# Publishes @verseva/hex-gate to npmjs on every published release.
+# Requires an NPM_TOKEN repo secret: an npmjs automation token with publish
+# rights on the @verseva scope. The package is public (publishConfig.access),
+# so no paid npm plan is involved.
+name: publish
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          registry-url: https://registry.npmjs.org
+      - run: npm test
+      - run: npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

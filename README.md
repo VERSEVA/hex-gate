@@ -11,7 +11,7 @@ Zero dependencies, one file, Node 18+.
 ## Install
 
 ```bash
-npm i -D verseva-hex-gate
+npm i -D @verseva/hex-gate
 ```
 
 ## Use

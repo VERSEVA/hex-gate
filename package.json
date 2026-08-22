@@ -1,5 +1,5 @@
 {
-  "name": "verseva-hex-gate",
+  "name": "@verseva/hex-gate",
   "version": "1.0.0",
   "description": "Fail the build on any hex color not drawn from your design tokens. No hand-picked colors, enforced in CI.",
   "license": "MIT",
@@ -27,5 +27,8 @@
   },
   "scripts": {
     "test": "node --test test/*.test.mjs"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }
