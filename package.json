@@ -1,0 +1,31 @@
+{
+  "name": "verseva-hex-gate",
+  "version": "1.0.0",
+  "description": "Fail the build on any hex color not drawn from your design tokens. No hand-picked colors, enforced in CI.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/verseva/hex-gate.git"
+  },
+  "keywords": [
+    "design-tokens",
+    "design-system",
+    "lint",
+    "css",
+    "tailwind",
+    "ci"
+  ],
+  "type": "module",
+  "bin": {
+    "verseva-hex-gate": "bin/hex-gate.mjs"
+  },
+  "files": [
+    "bin"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "test": "node --test test/*.test.mjs"
+  }
+}
