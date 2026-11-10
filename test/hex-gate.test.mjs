@@ -109,6 +109,22 @@ test('trailing --tokens after valid args exits 2 with usage', () => {
   noStack(r.out);
 });
 
+test('--tokens/--allow with a missing value or a following flag exit 2 with usage on stderr', () => {
+  const cases = [
+    ['--tokens'],
+    ['--tokens', '--allow', 'x', fx('proj')],
+    ['--allow'],
+    ['--allow', '--tokens', fx('tokens.css'), fx('proj')],
+  ];
+  for (const args of cases) {
+    const r = runSplit(args);
+    assert.equal(r.code, 2, args.join(' '));
+    assert.equal(r.stdout, '', args.join(' '));
+    assert.match(r.stderr, /^usage: verseva-hex-gate --tokens/m, args.join(' '));
+    noStack(r.stderr);
+  }
+});
+
 test('unknown option exits 2 naming the option, then usage', () => {
   const r = run([...TOKENS, '--bogus', fx('proj')]);
   assert.equal(r.code, 2);
