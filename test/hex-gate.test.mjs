@@ -216,3 +216,52 @@ test('dangling .css symlink does not hide an off-token file next to it', () => {
   assert.match(r.stderr, /bad\.css:1/);
   assert.match(r.stderr, /skipped unreadable/);
 });
+
+test('two off-token hexes on one line are listed separately with the same line', () => {
+  const r = runSplit([...TOKENS, fx('cases', 'multi.css')]);
+  assert.equal(r.code, 1);
+  assert.match(r.stderr, /2 off-token hexes\n/);
+  assert.match(r.stderr, /multi\.css:2 {2}#FF00AA$/m);
+  assert.match(r.stderr, /multi\.css:2 {2}#00FF11$/m);
+});
+
+const ALPHA_TOKENS = ['--tokens', fx('cases', 'alpha-tokens.css')];
+
+test('8-digit and 4-digit alpha hexes are authorized by a matching token', () => {
+  const r = runSplit([...ALPHA_TOKENS, fx('cases', 'alpha-ok.css')]);
+  assert.equal(r.code, 0, r.stderr);
+});
+
+test('8-digit and 4-digit alpha hexes off the token set are flagged', () => {
+  const r = runSplit([...ALPHA_TOKENS, fx('cases', 'alpha-bad.css')]);
+  assert.equal(r.code, 1);
+  assert.match(r.stderr, /alpha-bad\.css:1 {2}#11223355$/m);
+  assert.match(r.stderr, /alpha-bad\.css:2 {2}#ABCE$/m);
+});
+
+test('3-char hex with letters is not swallowed by the issue-ref guard', () => {
+  const r = runSplit([...TOKENS, fx('cases', 'short-letters.css')]);
+  assert.equal(r.code, 1);
+  assert.match(r.stderr, /short-letters\.css:1 {2}#abc$/m);
+});
+
+test('CRLF line endings keep correct line numbers', () => {
+  // Built at runtime so git's autocrlf setting cannot rewrite the endings.
+  const dir = fs.mkdtempSync(path.join(fs.realpathSync(os.tmpdir()), 'hex-gate-crlf-'));
+  try {
+    const file = path.join(dir, 'crlf.css');
+    fs.writeFileSync(file, '/* crlf */\r\n.x {\r\n  color: #FF00AA;\r\n}\r\n');
+    const r = runSplit([...TOKENS, file]);
+    assert.equal(r.code, 1);
+    assert.match(r.stderr, /crlf\.css:3 {2}#FF00AA$/m);
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test('a single violation uses the singular "1 off-token hex"', () => {
+  const r = runSplit([...TOKENS, fx('proj', 'bad.css')]);
+  assert.equal(r.code, 1);
+  assert.match(r.stderr, /^verseva-hex-gate: 1 off-token hex\n/m);
+  assert.doesNotMatch(r.stderr, /off-token hexes/);
+});
