@@ -6,6 +6,8 @@
  * Usage:
  *   verseva-hex-gate --tokens <tokens.css> [--tokens <theme.css>]...
  *                    [--allow <path-substring>]... <file-or-dir>...
+ *   verseva-hex-gate --help | -h        print usage, exit 0
+ *   verseva-hex-gate --version | -v     print package version, exit 0
  *
  * Rules:
  * - The allowed set is every hex literal found in the --tokens files,
@@ -31,8 +33,10 @@ function normalize(hex) {
   return h;
 }
 
+const USAGE = 'usage: verseva-hex-gate --tokens <tokens.css> [--tokens ...] [--allow <substr>] <paths...>';
+
 function usage() {
-  console.error('usage: verseva-hex-gate --tokens <tokens.css> [--tokens ...] [--allow <substr>] <paths...>');
+  console.error(USAGE);
   process.exit(2);
 }
 
@@ -76,7 +80,18 @@ function hexesIn(text) {
   return found;
 }
 
-const { tokens, allow, paths } = parseArgs(process.argv.slice(2));
+const argv = process.argv.slice(2);
+if (argv.includes('--help') || argv.includes('-h')) {
+  console.log(USAGE);
+  process.exit(0);
+}
+if (argv.includes('--version') || argv.includes('-v')) {
+  const pkg = JSON.parse(fs.readFileSync(new URL('../package.json', import.meta.url), 'utf8'));
+  console.log(pkg.version);
+  process.exit(0);
+}
+
+const { tokens, allow, paths } = parseArgs(argv);
 if (tokens.length === 0 || paths.length === 0) usage();
 for (const p of [...tokens, ...paths]) {
   if (!fs.existsSync(p)) {

@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
+import fs from 'node:fs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const bin = path.join(here, '..', 'bin', 'hex-gate.mjs');
@@ -93,4 +94,22 @@ test('missing scan path exits 2 and names the path', () => {
   assert.equal(r.code, 2);
   assert.match(r.out, /not found: nope\//);
   noStack(r.out);
+});
+
+test('--help and -h print usage to stdout and exit 0', () => {
+  for (const flag of ['--help', '-h']) {
+    const r = run([flag]);
+    assert.equal(r.code, 0);
+    assert.match(r.out, /^usage: verseva-hex-gate --tokens/);
+    assert.doesNotMatch(r.out, /Error|\n\s+at /);
+  }
+});
+
+test('--version and -v print the package version and exit 0', () => {
+  const { version } = JSON.parse(fs.readFileSync(path.join(here, '..', 'package.json'), 'utf8'));
+  for (const flag of ['--version', '-v']) {
+    const r = run([flag]);
+    assert.equal(r.code, 0);
+    assert.equal(r.out.trim(), version);
+  }
 });
