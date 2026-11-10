@@ -47,6 +47,15 @@ test('tailwind arbitrary value in tsx is caught', () => {
   assert.match(r.out, /#12E4B0/i);
 });
 
+test('every documented extension is scanned; .md and .json are ignored', () => {
+  const documented = ['.css', '.scss', '.ts', '.tsx', '.js', '.jsx', '.mjs', '.cjs', '.html'];
+  const r = run([...TOKENS, fx('exts')]);
+  assert.equal(r.code, 1, r.out);
+  const reported = [...r.out.matchAll(/^ {2}(.+):\d+ {2}#A1B2C3$/gm)].map((m) => path.extname(m[1]));
+  assert.deepEqual(reported.sort(), [...documented].sort());
+  assert.doesNotMatch(r.out, /notes\.md|data\.json/);
+});
+
 test('hex-ok marker suppresses the line', () => {
   const r = run([...TOKENS, fx('proj', 'marked.css')]);
   assert.equal(r.code, 0);
