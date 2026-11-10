@@ -56,7 +56,7 @@ Wire it ahead of your build:
   one-off). Put the reason in the adjacent comment; the marker is greppable later. It must be
   a whole token (`/* hex-ok: reason */`): `hex-okay` or `hex-ok-dark` does not exempt the line.
 - **`--allow <path-substring>`** (repeatable) skips whole files: vendored code, generated
-  output.
+  output. Matched against the path relative to the current working directory.
 - **All-digit 3/4-char matches (`#123`, `#4567`) are ignored** so issue references in comments
   don't trip the gate.
 - Exit `0` clean, `1` with a `file:line hex` listing on violations, `2` on usage errors.
