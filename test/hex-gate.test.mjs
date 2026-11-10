@@ -1,9 +1,10 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { execFileSync } from 'node:child_process';
+import { execFileSync, spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 import fs from 'node:fs';
+import os from 'node:os';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const bin = path.join(here, '..', 'bin', 'hex-gate.mjs');
@@ -157,4 +158,33 @@ test('--version and -v print the package version and exit 0', () => {
     assert.equal(r.code, 0);
     assert.equal(r.out.trim(), version);
   }
+});
+
+// Temp dir holding a dangling x.css symlink, an on-token good.css and,
+// optionally, an off-token bad.css. Returns the dir and the spawn result.
+function scanWithDanglingLink({ withBad }) {
+  const dir = fs.mkdtempSync(path.join(fs.realpathSync(os.tmpdir()), 'hex-gate-dangling-'));
+  try {
+    fs.symlinkSync(path.join(dir, 'missing-target.css'), path.join(dir, 'x.css'));
+    fs.writeFileSync(path.join(dir, 'good.css'), '.a { color: #0B0D10; }\n');
+    if (withBad) fs.writeFileSync(path.join(dir, 'bad.css'), '.b { color: #FF00AA; }\n');
+    const r = spawnSync(process.execPath, [bin, ...TOKENS, dir], { encoding: 'utf8' });
+    return { dir, r };
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+}
+
+test('dangling .css symlink is skipped with a warning and the run stays clean', () => {
+  const { dir, r } = scanWithDanglingLink({ withBad: false });
+  assert.equal(r.status, 0, r.stderr);
+  assert.ok(r.stderr.includes(`verseva-hex-gate: skipped unreadable ${path.join(dir, 'x.css')}`), r.stderr);
+  assert.doesNotMatch(r.stderr, /ENOENT|\n\s+at /);
+});
+
+test('dangling .css symlink does not hide an off-token file next to it', () => {
+  const { r } = scanWithDanglingLink({ withBad: true });
+  assert.equal(r.status, 1, r.stderr);
+  assert.match(r.stderr, /bad\.css:1/);
+  assert.match(r.stderr, /skipped unreadable/);
 });
