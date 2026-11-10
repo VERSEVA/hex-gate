@@ -44,6 +44,19 @@ test('hex-ok marker suppresses the line', () => {
   assert.equal(r.code, 0);
 });
 
+test('hex-ok inside a longer token does not suppress the line', () => {
+  const r = run([...TOKENS, fx('proj', 'marked-substring.css')]);
+  assert.equal(r.code, 1);
+  assert.match(r.out, /marked-substring\.css:1 /);
+  assert.match(r.out, /marked-substring\.css:2 /);
+  assert.match(r.out, /marked-substring\.css:3 /);
+});
+
+test('hex-ok as its own token suppresses the line', () => {
+  const r = run([...TOKENS, fx('proj', 'marked-token.css')]);
+  assert.equal(r.code, 0, r.out);
+});
+
 test('3-digit token authorizes its 6-digit form and vice versa', () => {
   const r = run([...TOKENS, fx('proj', 'short.css')]);
   assert.equal(r.code, 0);
