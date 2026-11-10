@@ -66,6 +66,12 @@ and template literals at once; one zero-dependency scanner over the whole tree c
 door with a single allowed set. If you want editor squiggles too, run a lint rule as well;
 this is the gate that decides whether the build ships.
 
+## CI
+
+Code scanning on this repo is Semgrep OSS via CI. GitHub CodeQL default setup is turned off
+and no GitHub Advanced Security features are enabled. The Semgrep job lands in a follow-up
+ticket.
+
 ---
 
 Built and used in production by [VERSEVA](https://github.com/verseva).
