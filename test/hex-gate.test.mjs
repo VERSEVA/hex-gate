@@ -334,6 +334,36 @@ test('hex matching is case-insensitive between tokens and source, both direction
   assert.equal(lower.code, 0, lower.stderr);
 });
 
+// Temp dir holding its own tokens.css, an on-token good.css and, optionally,
+// an off-token bad.css. Scans the whole dir with --tokens pointing inside it.
+function scanWithTokensInside({ withBad }) {
+  const dir = fs.mkdtempSync(path.join(fs.realpathSync(os.tmpdir()), 'hex-gate-tokens-inside-'));
+  try {
+    fs.writeFileSync(path.join(dir, 'tokens.css'), ':root { --bg: #0B0D10; --accent: #BE8455; }\n');
+    fs.writeFileSync(path.join(dir, 'good.css'), '.a { color: #0B0D10; }\n');
+    if (withBad) fs.writeFileSync(path.join(dir, 'bad.css'), '.b { color: #FF00AA; }\n');
+    return spawnSync(process.execPath, [bin, '--tokens', path.join(dir, 'tokens.css'), dir], { encoding: 'utf8' });
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+}
+
+test('a --tokens file inside the scanned tree is not reported', () => {
+  const r = scanWithTokensInside({ withBad: false });
+  assert.equal(r.status, 0, r.stderr);
+  assert.equal(r.stdout, 'verseva-hex-gate: clean (2 token hexes authorized)\n');
+  assert.doesNotMatch(r.stderr, /tokens\.css:\d+/);
+});
+
+test('a --tokens file inside the scanned tree: only the off-token file is listed', () => {
+  const r = scanWithTokensInside({ withBad: true });
+  assert.equal(r.status, 1, r.stderr);
+  const findings = r.stderr.split('\n').filter((l) => /\.css:\d+/.test(l));
+  assert.equal(findings.length, 1, r.stderr);
+  assert.match(findings[0], /bad\.css:1 {2}#FF00AA$/);
+  assert.doesNotMatch(r.stderr, /tokens\.css:\d+/);
+});
+
 test('violations go to stderr only; the clean summary goes to stdout only', () => {
   const bad = runSplit([...TOKENS, fx('proj', 'bad.css')]);
   assert.equal(bad.code, 1);
