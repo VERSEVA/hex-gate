@@ -62,6 +62,8 @@ Anything else is treated as a path to scan, so an unknown option such as `--bogu
 
 - **Tokens files define the allowed set.** Pass `--tokens` more than once (base tokens plus a
   brand theme). Hexes are normalized, so `#fff` authorizes `#ffffff` and vice versa.
+  Matching is case-insensitive: a token written `#12E4B0` authorizes `#12e4b0` in source and
+  vice versa.
 - **Empty allowed set warns.** If the `--tokens` files contain no hex literals at all (say,
   colors defined only as `rgb()`, `hsl()` or `oklch()`), the gate prints
   `verseva-hex-gate: warning: no hex values found in --tokens files (<files>)` to stderr.
