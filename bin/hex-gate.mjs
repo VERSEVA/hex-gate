@@ -15,7 +15,8 @@
  * - A line containing "hex-ok" is exempt (use for ratified third-party
  *   values, with a reason in the adjacent comment).
  * - All-digit 3/4-char matches (#123) are ignored: issue-ref guard.
- * - --allow skips any file whose path contains the given substring.
+ * - --allow skips any file whose path contains the given substring,
+ *   matched against the path relative to the current working directory.
  * - Exit 1 with file:line listings on violations; exit 0 clean.
  */
 import fs from 'node:fs';
@@ -85,7 +86,8 @@ for (const root of paths) {
   for (const file of walk(root)) {
     const abs = path.resolve(file);
     if (tokenFiles.has(abs)) continue;
-    if (allow.some((a) => abs.includes(a))) continue;
+    const rel = path.relative(process.cwd(), abs).split(path.sep).join('/');
+    if (allow.some((a) => rel.includes(a))) continue;
     const lines = fs.readFileSync(file, 'utf8').split('\n');
     lines.forEach((line, i) => {
       if (line.includes('hex-ok')) return;
