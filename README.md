@@ -41,6 +41,16 @@ Wire it ahead of your build:
 }
 ```
 
+## Flags
+
+- `--tokens <tokens.css>`: tokens file whose hexes form the allowed set. Required; repeatable.
+- `--allow <substr>`: skip any file whose path contains the substring. Repeatable.
+- `--help`, `-h`: print the usage line to stdout and exit `0`.
+- `--version`, `-v`: print the package version and exit `0`.
+
+Anything else is treated as a path to scan, so an unknown option such as `--bogus` fails with
+`verseva-hex-gate: not found: --bogus` and exit `2`.
+
 ## What it scans
 
 `.css` `.scss` `.ts` `.tsx` `.js` `.jsx` `.mjs` `.cjs` `.html`, recursively; `node_modules`,
