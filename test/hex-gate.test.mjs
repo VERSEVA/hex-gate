@@ -363,3 +363,15 @@ test('a --tokens file inside the scanned tree: only the off-token file is listed
   assert.match(findings[0], /bad\.css:1 {2}#FF00AA$/);
   assert.doesNotMatch(r.stderr, /tokens\.css:\d+/);
 });
+
+test('violations go to stderr only; the clean summary goes to stdout only', () => {
+  const bad = runSplit([...TOKENS, fx('proj', 'bad.css')]);
+  assert.equal(bad.code, 1);
+  assert.equal(bad.stdout, '');
+  assert.match(bad.stderr, /off-token/);
+
+  const clean = runSplit([...TOKENS, fx('proj-clean')]);
+  assert.equal(clean.code, 0, clean.stderr);
+  assert.equal(clean.stderr, '');
+  assert.match(clean.stdout, /^verseva-hex-gate: clean/);
+});
