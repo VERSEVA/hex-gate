@@ -101,6 +101,14 @@ test('trailing --tokens after valid args exits 2 with usage', () => {
   noStack(r.out);
 });
 
+test('unknown option exits 2 naming the option, then usage', () => {
+  const r = run([...TOKENS, '--bogus', fx('proj')]);
+  assert.equal(r.code, 2);
+  assert.match(r.out, /^verseva-hex-gate: unknown option: --bogus\nusage: verseva-hex-gate --tokens/);
+  assert.doesNotMatch(r.out, /not found/);
+  noStack(r.out);
+});
+
 test('missing tokens file exits 2 and names the path', () => {
   const r = run(['--tokens', 'nope.css', fx('proj')]);
   assert.equal(r.code, 2);
