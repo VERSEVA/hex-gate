@@ -33,6 +33,13 @@ test('hex drawn from tokens passes', () => {
   assert.equal(r.code, 0);
 });
 
+test('clean fixture tree with only good.css exits 0 with zero-finding summary', () => {
+  const r = run([...TOKENS, fx('proj-clean')]);
+  assert.equal(r.code, 0, r.out);
+  assert.equal(r.out, 'verseva-hex-gate: clean (4 token hexes authorized)\n');
+  assert.doesNotMatch(r.out, /off-token/);
+});
+
 test('tailwind arbitrary value in tsx is caught', () => {
   const r = run([...TOKENS, fx('proj', 'page.tsx')]);
   assert.equal(r.code, 1);
