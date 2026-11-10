@@ -73,8 +73,9 @@ A non-zero exit (`1` violations, `2` usage error) blocks the commit.
 - `--help`, `-h`: print the usage line to stdout and exit `0`.
 - `--version`, `-v`: print the package version and exit `0`.
 
-Anything else is treated as a path to scan, so an unknown option such as `--bogus` fails with
-`verseva-hex-gate: not found: --bogus` and exit `2`.
+Any other argument starting with `-` is an unknown option: `--bogus` fails with
+`verseva-hex-gate: unknown option: --bogus` followed by the usage line, and exit `2`.
+Everything else is treated as a path to scan.
 
 ## What it scans
 
