@@ -125,7 +125,17 @@ for (const root of paths) {
     if (tokenFiles.has(abs)) continue;
     const rel = path.relative(process.cwd(), abs).split(path.sep).join('/');
     if (allow.some((a) => rel.includes(a))) continue;
-    const lines = fs.readFileSync(file, 'utf8').split('\n');
+    let text;
+    try {
+      text = fs.readFileSync(file, 'utf8');
+    } catch (e) {
+      // Dangling symlinks (ENOENT) and links to directories (EISDIR) are not
+      // scannable files: warn and move on instead of crashing with exit 1.
+      if (e.code !== 'ENOENT' && e.code !== 'EISDIR') throw e;
+      console.error(`verseva-hex-gate: skipped unreadable ${file}`);
+      continue;
+    }
+    const lines = text.split('\n');
     lines.forEach((line, i) => {
       if (HEX_OK_RE.test(line)) return;
       for (const { raw, norm } of hexesIn(line)) {
