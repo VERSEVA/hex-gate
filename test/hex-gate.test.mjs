@@ -302,3 +302,10 @@ test('a single bad file path reports that file and not its sibling', () => {
   assert.match(r.out, /siblings[\\/]bad\.css:1 {2}#FF00AA/);
   assert.doesNotMatch(r.out, /good\.css/);
 });
+
+test('hex matching is case-insensitive between tokens and source, both directions', () => {
+  const upper = runSplit(['--tokens', fx('cases', 'case-tokens-upper.css'), fx('cases', 'case-src-lower.css')]);
+  assert.equal(upper.code, 0, upper.stderr);
+  const lower = runSplit(['--tokens', fx('cases', 'case-tokens-lower.css'), fx('cases', 'case-src-upper.css')]);
+  assert.equal(lower.code, 0, lower.stderr);
+});
