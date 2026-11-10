@@ -80,6 +80,21 @@ test('--allow skips the file', () => {
   assert.equal(r.code, 0);
 });
 
+test('--allow is repeatable: each substring skips its file, others still fail', () => {
+  const r = run([
+    ...TOKENS,
+    '--allow', 'legacy',
+    '--allow', 'third-party',
+    fx('proj-allow'),
+    fx('proj-allow-extra'),
+  ]);
+  assert.equal(r.code, 1, r.out);
+  const findings = r.out.split('\n').filter((l) => /\.css:\d+/.test(l));
+  assert.equal(findings.length, 1, r.out);
+  assert.match(findings[0], /off-token\.css:1\s+#FF00AA/i);
+  assert.doesNotMatch(r.out, /legacy-vendor\.css|third-party\.css/);
+});
+
 test('--allow does not match directories above cwd', () => {
   const r = run([...TOKENS, '--allow', 'legacy', '.'], { cwd: fx('legacy-root') });
   assert.equal(r.code, 1);
