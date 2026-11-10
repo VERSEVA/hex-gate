@@ -375,3 +375,28 @@ test('violations go to stderr only; the clean summary goes to stdout only', () =
   assert.equal(clean.stderr, '');
   assert.match(clean.stdout, /^verseva-hex-gate: clean/);
 });
+
+test('symlinked directories, including a loop back to the parent, are not followed', (t) => {
+  const base = fs.mkdtempSync(path.join(fs.realpathSync(os.tmpdir()), 'hex-gate-dirlink-'));
+  try {
+    const dir = path.join(base, 'scan');
+    const outside = path.join(base, 'outside');
+    fs.mkdirSync(dir);
+    fs.mkdirSync(outside);
+    fs.writeFileSync(path.join(dir, 'clean.css'), '.a { color: #0B0D10; }\n');
+    fs.writeFileSync(path.join(outside, 'bad.css'), '.b { color: #FF00AA; }\n');
+    try {
+      fs.symlinkSync(outside, path.join(dir, 'linked'), 'dir');
+      fs.symlinkSync(dir, path.join(dir, 'loop'), 'dir');
+    } catch (e) {
+      if (e.code === 'EPERM') return t.skip('symlink creation not permitted');
+      throw e;
+    }
+    const r = spawnSync(process.execPath, [bin, ...TOKENS, dir], { encoding: 'utf8', timeout: 10000 });
+    assert.equal(r.error, undefined, 'scan did not terminate');
+    assert.equal(r.status, 0, r.stderr);
+    assert.doesNotMatch(`${r.stdout}${r.stderr}`, /bad\.css|#FF00AA/);
+  } finally {
+    fs.rmSync(base, { recursive: true, force: true });
+  }
+});
