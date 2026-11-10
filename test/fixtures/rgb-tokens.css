@@ -1,0 +1,5 @@
+:root {
+  --color-bg: rgb(255 255 255);
+  --color-fg: hsl(240 10% 4%);
+  --color-accent: oklch(0.7 0.15 160);
+}
