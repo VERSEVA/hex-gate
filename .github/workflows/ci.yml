@@ -1,0 +1,27 @@
+name: ci
+on:
+  pull_request:
+  push:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ${{ vars.CI_RUNS_ON || 'ubuntu-latest' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm test
+  semgrep:
+    runs-on: ${{ vars.CI_RUNS_ON || 'ubuntu-latest' }}
+    # Non-blocking on first landing; flip to blocking in a follow-up.
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install semgrep==1.95.0
+      - run: semgrep scan --config p/javascript --config p/secrets --metrics=off --error
