@@ -44,7 +44,8 @@ Wire it ahead of your build:
 ## What it scans
 
 `.css` `.scss` `.ts` `.tsx` `.js` `.jsx` `.mjs` `.cjs` `.html`, recursively; `node_modules`,
-`.git`, `.next`, `dist`, `build`, `out` are skipped. Tailwind arbitrary values
+`.git`, `.next`, `dist`, `build`, `out`, `.turbo`, `.vercel`, `coverage`, `.output`,
+`.nuxt`, `.cache`, `storybook-static` are skipped. Tailwind arbitrary values
 (`bg-[#12E4B0]`) are caught like any other literal.
 
 ## Rules

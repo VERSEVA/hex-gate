@@ -96,6 +96,11 @@ test('missing scan path exits 2 and names the path', () => {
   noStack(r.out);
 });
 
+test('directory scan skips generated output dirs', () => {
+  const r = run([...TOKENS, fx('proj-skip')]);
+  assert.equal(r.code, 0, r.out);
+});
+
 test('--help and -h print usage to stdout and exit 0', () => {
   for (const flag of ['--help', '-h']) {
     const r = run([flag]);
