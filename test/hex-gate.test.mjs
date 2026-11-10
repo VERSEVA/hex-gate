@@ -8,9 +8,9 @@ const here = path.dirname(fileURLToPath(import.meta.url));
 const bin = path.join(here, '..', 'bin', 'hex-gate.mjs');
 const fx = (...p) => path.join(here, 'fixtures', ...p);
 
-function run(args) {
+function run(args, opts = {}) {
   try {
-    const stdout = execFileSync(process.execPath, [bin, ...args], { encoding: 'utf8' });
+    const stdout = execFileSync(process.execPath, [bin, ...args], { encoding: 'utf8', ...opts });
     return { code: 0, out: stdout };
   } catch (e) {
     return { code: e.status, out: `${e.stdout ?? ''}${e.stderr ?? ''}` };
@@ -56,6 +56,12 @@ test('all-digit short sequences (issue refs) are ignored', () => {
 test('--allow skips the file', () => {
   const r = run([...TOKENS, '--allow', 'legacy', fx('proj-allow')]);
   assert.equal(r.code, 0);
+});
+
+test('--allow does not match directories above cwd', () => {
+  const r = run([...TOKENS, '--allow', 'legacy', '.'], { cwd: fx('legacy-root') });
+  assert.equal(r.code, 1);
+  assert.match(r.out, /off\.css:1/);
 });
 
 test('directory scan walks and skips node_modules', () => {
