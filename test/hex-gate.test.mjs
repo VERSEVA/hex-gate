@@ -272,3 +272,17 @@ test('a single violation uses the singular "1 off-token hex"', () => {
   assert.match(r.stderr, /^verseva-hex-gate: 1 off-token hex\n/m);
   assert.doesNotMatch(r.stderr, /off-token hexes/);
 });
+
+test('a single file path does not scan sibling files', () => {
+  const r = run([...TOKENS, fx('siblings', 'good.css')]);
+  assert.equal(r.code, 0, r.out);
+  assert.doesNotMatch(r.out, /bad\.css/);
+  assert.doesNotMatch(r.out, /#FF00AA/i);
+});
+
+test('a single bad file path reports that file and not its sibling', () => {
+  const r = run([...TOKENS, fx('siblings', 'bad.css')]);
+  assert.equal(r.code, 1);
+  assert.match(r.out, /siblings[\\/]bad\.css:1 {2}#FF00AA/);
+  assert.doesNotMatch(r.out, /good\.css/);
+});
