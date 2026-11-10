@@ -78,6 +78,11 @@ and template literals at once; one zero-dependency scanner over the whole tree c
 door with a single allowed set. If you want editor squiggles too, run a lint rule as well;
 this is the gate that decides whether the build ships.
 
+## Testing
+
+Run `npm test` from the repo root. It runs `test/hex-gate.test.mjs` with Node's built-in test
+runner against the fixtures in `test/fixtures`; no install step is needed.
+
 ## CI
 
 Code scanning on this repo is Semgrep OSS via CI. GitHub CodeQL default setup is turned off
