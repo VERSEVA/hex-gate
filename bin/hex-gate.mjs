@@ -18,7 +18,8 @@
  *   values, with a reason in the adjacent comment).
  * - All-digit 3/4-char matches (#123) are ignored: issue-ref guard.
  * - --allow skips any file whose path contains the given substring.
- * - Exit 1 with file:line listings on violations; exit 0 clean.
+ * - Exit 0 clean; exit 1 with file:line listings on violations;
+ *   exit 2 on usage errors.
  */
 import fs from 'node:fs';
 import path from 'node:path';
