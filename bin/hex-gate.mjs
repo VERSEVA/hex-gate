@@ -14,7 +14,8 @@
  *   normalized (lowercase, #rgb/#rgba expanded to #rrggbb/#rrggbbaa).
  *   If that set is empty, a warning goes to stderr; exit codes are unchanged.
  * - Scans .css .scss .ts .tsx .js .jsx .mjs .cjs .html under the given
- *   paths; node_modules, .git, .next, dist, build, out are skipped.
+ *   paths; node_modules, .git, .next, dist, build, out, .turbo, .vercel,
+ *   coverage, .output, .nuxt, .cache, storybook-static are skipped.
  * - A line containing "hex-ok" as a whole token is exempt (use for ratified
  *   third-party values, with a reason in the adjacent comment).
  * - All-digit 3/4-char matches (#123) are ignored: issue-ref guard.
