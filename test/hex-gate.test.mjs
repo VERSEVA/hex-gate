@@ -128,6 +128,19 @@ test('directory scan skips generated output dirs', () => {
   assert.equal(r.code, 0, r.out);
 });
 
+test('exit codes: 0 clean, 1 findings, 2 usage error', () => {
+  const table = [
+    { name: 'clean tree', args: [...TOKENS, fx('proj', 'good.css')], code: 0 },
+    { name: 'finding', args: [...TOKENS, fx('proj', 'bad.css')], code: 1 },
+    { name: 'unknown flag', args: [...TOKENS, '--bogus', fx('proj')], code: 2 },
+    { name: 'missing operand', args: ['--tokens'], code: 2 },
+  ];
+  for (const { name, args, code } of table) {
+    const r = run(args);
+    assert.equal(r.code, code, `${name}: ${r.out}`);
+  }
+});
+
 test('--help and -h print usage to stdout and exit 0', () => {
   for (const flag of ['--help', '-h']) {
     const r = run([flag]);
