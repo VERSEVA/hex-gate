@@ -23,5 +23,6 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - run: pip install semgrep==1.95.0
+      # semgrep 1.95's opentelemetry deps import pkg_resources; py3.12 ships no setuptools.
+      - run: pip install semgrep==1.95.0 'setuptools<81'
       - run: semgrep scan --config p/javascript --config p/secrets --metrics=off --error
