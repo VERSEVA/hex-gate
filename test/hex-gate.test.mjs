@@ -333,3 +333,15 @@ test('hex matching is case-insensitive between tokens and source, both direction
   const lower = runSplit(['--tokens', fx('cases', 'case-tokens-lower.css'), fx('cases', 'case-src-upper.css')]);
   assert.equal(lower.code, 0, lower.stderr);
 });
+
+test('violations go to stderr only; the clean summary goes to stdout only', () => {
+  const bad = runSplit([...TOKENS, fx('proj', 'bad.css')]);
+  assert.equal(bad.code, 1);
+  assert.equal(bad.stdout, '');
+  assert.match(bad.stderr, /off-token/);
+
+  const clean = runSplit([...TOKENS, fx('proj-clean')]);
+  assert.equal(clean.code, 0, clean.stderr);
+  assert.equal(clean.stderr, '');
+  assert.match(clean.stdout, /^verseva-hex-gate: clean/);
+});
