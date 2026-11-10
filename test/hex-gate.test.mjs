@@ -66,6 +66,11 @@ test('directory scan walks and skips node_modules', () => {
   assert.doesNotMatch(r.out, /node_modules/);
 });
 
+test('directory scan skips generated output dirs', () => {
+  const r = run([...TOKENS, fx('proj-skip')]);
+  assert.equal(r.code, 0, r.out);
+});
+
 test('--help and -h print usage to stdout and exit 0', () => {
   for (const flag of ['--help', '-h']) {
     const r = run([flag]);
