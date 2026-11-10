@@ -74,6 +74,13 @@ test('trailing --tokens with no value exits 2 with usage', () => {
   noStack(r.out);
 });
 
+test('trailing --tokens after valid args exits 2 with usage', () => {
+  const r = run([...TOKENS, fx('proj'), '--tokens']);
+  assert.equal(r.code, 2);
+  assert.match(r.out, /usage:/);
+  noStack(r.out);
+});
+
 test('missing tokens file exits 2 and names the path', () => {
   const r = run(['--tokens', 'nope.css', fx('proj')]);
   assert.equal(r.code, 2);
