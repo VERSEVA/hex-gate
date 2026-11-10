@@ -14,8 +14,8 @@
  *   normalized (lowercase, #rgb/#rgba expanded to #rrggbb/#rrggbbaa).
  * - Scans .css .scss .ts .tsx .js .jsx .mjs .cjs .html under the given
  *   paths; node_modules, .git, .next, dist, build, out are skipped.
- * - A line containing "hex-ok" is exempt (use for ratified third-party
- *   values, with a reason in the adjacent comment).
+ * - A line containing "hex-ok" as a whole token is exempt (use for ratified
+ *   third-party values, with a reason in the adjacent comment).
  * - All-digit 3/4-char matches (#123) are ignored: issue-ref guard.
  * - --allow skips any file whose path contains the given substring.
  * - Exit 1 with file:line listings on violations; exit 0 clean.
@@ -27,6 +27,9 @@ const SCAN_EXT = new Set(['.css', '.scss', '.ts', '.tsx', '.js', '.jsx', '.mjs',
 const SKIP_DIRS = new Set(['node_modules', '.git', '.next', 'dist', 'build', 'out', '.turbo', '.vercel',
   'coverage', '.output', '.nuxt', '.cache', 'storybook-static']);
 const HEX_RE = /#([0-9a-fA-F]{8}|[0-9a-fA-F]{6}|[0-9a-fA-F]{3,4})\b/g;
+// Whole-token marker: no word char or hyphen on either side, so "hex-okay",
+// "prefixhex-ok" and "hex-ok-dark" do not exempt a line.
+const HEX_OK_RE = /(?<![\w-])hex-ok(?![\w-])/;
 
 function normalize(hex) {
   const h = hex.toLowerCase();
@@ -115,7 +118,7 @@ for (const root of paths) {
     if (allow.some((a) => abs.includes(a))) continue;
     const lines = fs.readFileSync(file, 'utf8').split('\n');
     lines.forEach((line, i) => {
-      if (line.includes('hex-ok')) return;
+      if (HEX_OK_RE.test(line)) return;
       for (const { raw, norm } of hexesIn(line)) {
         if (!allowed.has(norm)) violations.push(`${file}:${i + 1}  ${raw}`);
       }
