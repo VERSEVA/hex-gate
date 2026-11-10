@@ -54,7 +54,7 @@ Wire it ahead of your build:
 - **`hex-ok`** on a line marks a deliberate exception (a third-party embed, a ratified
   one-off). Put the reason in the adjacent comment; the marker is greppable later.
 - **`--allow <path-substring>`** (repeatable) skips whole files: vendored code, generated
-  output.
+  output. Matched against the path relative to the current working directory.
 - **All-digit 3/4-char matches (`#123`, `#4567`) are ignored** so issue references in comments
   don't trip the gate.
 - Exit `0` clean, `1` with a `file:line hex` listing on violations, `2` on usage errors.
