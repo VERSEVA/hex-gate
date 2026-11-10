@@ -160,6 +160,34 @@ test('--version and -v print the package version and exit 0', () => {
   }
 });
 
+function runSplit(args) {
+  const r = spawnSync(process.execPath, [bin, ...args], { encoding: 'utf8' });
+  return { code: r.status, stdout: r.stdout, stderr: r.stderr };
+}
+
+const NO_HEX_WARNING =
+  /^verseva-hex-gate: warning: no hex values found in --tokens files \(.*rgb-tokens\.css\)$/m;
+
+test('rgb-only tokens file warns on stderr; clean run still exits 0', () => {
+  const rgb = fx('rgb-tokens.css');
+  const r = runSplit(['--tokens', rgb, rgb]);
+  assert.equal(r.code, 0, r.stderr);
+  assert.match(r.stderr, NO_HEX_WARNING);
+  assert.doesNotMatch(r.stdout, /warning/);
+});
+
+test('rgb-only tokens file warns on stderr; violations still exit 1', () => {
+  const r = runSplit(['--tokens', fx('rgb-tokens.css'), fx('proj', 'bad.css')]);
+  assert.equal(r.code, 1);
+  assert.match(r.stderr, NO_HEX_WARNING);
+});
+
+test('tokens file with hexes prints no warning', () => {
+  const r = runSplit([...TOKENS, fx('proj', 'good.css')]);
+  assert.equal(r.code, 0);
+  assert.doesNotMatch(r.stderr, /warning/);
+});
+
 // Temp dir holding a dangling x.css symlink, an on-token good.css and,
 // optionally, an off-token bad.css. Returns the dir and the spawn result.
 function scanWithDanglingLink({ withBad }) {

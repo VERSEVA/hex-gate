@@ -62,6 +62,10 @@ Anything else is treated as a path to scan, so an unknown option such as `--bogu
 
 - **Tokens files define the allowed set.** Pass `--tokens` more than once (base tokens plus a
   brand theme). Hexes are normalized, so `#fff` authorizes `#ffffff` and vice versa.
+- **Empty allowed set warns.** If the `--tokens` files contain no hex literals at all (say,
+  colors defined only as `rgb()`, `hsl()` or `oklch()`), the gate prints
+  `verseva-hex-gate: warning: no hex values found in --tokens files (<files>)` to stderr.
+  Exit codes are unchanged.
 - **`hex-ok`** on a line marks a deliberate exception (a third-party embed, a ratified
   one-off). Put the reason in the adjacent comment; the marker is greppable later. It must be
   a whole token (`/* hex-ok: reason */`): `hex-okay` or `hex-ok-dark` does not exempt the line.
