@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
+import fs from 'node:fs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const bin = path.join(here, '..', 'bin', 'hex-gate.mjs');
@@ -43,6 +44,19 @@ test('hex-ok marker suppresses the line', () => {
   assert.equal(r.code, 0);
 });
 
+test('hex-ok inside a longer token does not suppress the line', () => {
+  const r = run([...TOKENS, fx('proj', 'marked-substring.css')]);
+  assert.equal(r.code, 1);
+  assert.match(r.out, /marked-substring\.css:1 /);
+  assert.match(r.out, /marked-substring\.css:2 /);
+  assert.match(r.out, /marked-substring\.css:3 /);
+});
+
+test('hex-ok as its own token suppresses the line', () => {
+  const r = run([...TOKENS, fx('proj', 'marked-token.css')]);
+  assert.equal(r.code, 0, r.out);
+});
+
 test('3-digit token authorizes its 6-digit form and vice versa', () => {
   const r = run([...TOKENS, fx('proj', 'short.css')]);
   assert.equal(r.code, 0);
@@ -69,4 +83,57 @@ test('directory scan walks and skips node_modules', () => {
   assert.equal(r.code, 1);
   assert.match(r.out, /bad\.css/);
   assert.doesNotMatch(r.out, /node_modules/);
+});
+
+const noStack = (out) => assert.doesNotMatch(out, /^\s+at /m);
+
+test('trailing --tokens with no value exits 2 with usage', () => {
+  const r = run(['--tokens']);
+  assert.equal(r.code, 2);
+  assert.match(r.out, /usage:/);
+  noStack(r.out);
+});
+
+test('trailing --tokens after valid args exits 2 with usage', () => {
+  const r = run([...TOKENS, fx('proj'), '--tokens']);
+  assert.equal(r.code, 2);
+  assert.match(r.out, /usage:/);
+  noStack(r.out);
+});
+
+test('missing tokens file exits 2 and names the path', () => {
+  const r = run(['--tokens', 'nope.css', fx('proj')]);
+  assert.equal(r.code, 2);
+  assert.match(r.out, /not found: nope\.css/);
+  noStack(r.out);
+});
+
+test('missing scan path exits 2 and names the path', () => {
+  const r = run([...TOKENS, 'nope/']);
+  assert.equal(r.code, 2);
+  assert.match(r.out, /not found: nope\//);
+  noStack(r.out);
+});
+
+test('directory scan skips generated output dirs', () => {
+  const r = run([...TOKENS, fx('proj-skip')]);
+  assert.equal(r.code, 0, r.out);
+});
+
+test('--help and -h print usage to stdout and exit 0', () => {
+  for (const flag of ['--help', '-h']) {
+    const r = run([flag]);
+    assert.equal(r.code, 0);
+    assert.match(r.out, /^usage: verseva-hex-gate --tokens/);
+    assert.doesNotMatch(r.out, /Error|\n\s+at /);
+  }
+});
+
+test('--version and -v print the package version and exit 0', () => {
+  const { version } = JSON.parse(fs.readFileSync(path.join(here, '..', 'package.json'), 'utf8'));
+  for (const flag of ['--version', '-v']) {
+    const r = run([flag]);
+    assert.equal(r.code, 0);
+    assert.equal(r.out.trim(), version);
+  }
 });

@@ -44,7 +44,8 @@ Wire it ahead of your build:
 ## What it scans
 
 `.css` `.scss` `.ts` `.tsx` `.js` `.jsx` `.mjs` `.cjs` `.html`, recursively; `node_modules`,
-`.git`, `.next`, `dist`, `build`, `out` are skipped. Tailwind arbitrary values
+`.git`, `.next`, `dist`, `build`, `out`, `.turbo`, `.vercel`, `coverage`, `.output`,
+`.nuxt`, `.cache`, `storybook-static` are skipped. Tailwind arbitrary values
 (`bg-[#12E4B0]`) are caught like any other literal.
 
 ## Rules
@@ -52,7 +53,8 @@ Wire it ahead of your build:
 - **Tokens files define the allowed set.** Pass `--tokens` more than once (base tokens plus a
   brand theme). Hexes are normalized, so `#fff` authorizes `#ffffff` and vice versa.
 - **`hex-ok`** on a line marks a deliberate exception (a third-party embed, a ratified
-  one-off). Put the reason in the adjacent comment; the marker is greppable later.
+  one-off). Put the reason in the adjacent comment; the marker is greppable later. It must be
+  a whole token (`/* hex-ok: reason */`): `hex-okay` or `hex-ok-dark` does not exempt the line.
 - **`--allow <path-substring>`** (repeatable) skips whole files: vendored code, generated
   output. Matched against the path relative to the current working directory.
 - **All-digit 3/4-char matches (`#123`, `#4567`) are ignored** so issue references in comments
