@@ -12,6 +12,7 @@
  * Rules:
  * - The allowed set is every hex literal found in the --tokens files,
  *   normalized (lowercase, #rgb/#rgba expanded to #rrggbb/#rrggbbaa).
+ *   If that set is empty, a warning goes to stderr; exit codes are unchanged.
  * - Scans .css .scss .ts .tsx .js .jsx .mjs .cjs .html under the given
  *   paths; node_modules, .git, .next, dist, build, out are skipped.
  * - A line containing "hex-ok" as a whole token is exempt (use for ratified
@@ -111,6 +112,9 @@ for (const p of [...tokens, ...paths]) {
 const allowed = new Set();
 for (const t of tokens) {
   for (const { norm } of hexesIn(fs.readFileSync(t, 'utf8'))) allowed.add(norm);
+}
+if (allowed.size === 0) {
+  console.error(`verseva-hex-gate: warning: no hex values found in --tokens files (${tokens.join(', ')})`);
 }
 const tokenFiles = new Set(tokens.map((t) => path.resolve(t)));
 
