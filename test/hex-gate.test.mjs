@@ -64,3 +64,8 @@ test('directory scan walks and skips node_modules', () => {
   assert.match(r.out, /bad\.css/);
   assert.doesNotMatch(r.out, /node_modules/);
 });
+
+test('directory scan skips generated output dirs', () => {
+  const r = run([...TOKENS, fx('proj-skip')]);
+  assert.equal(r.code, 0, r.out);
+});
