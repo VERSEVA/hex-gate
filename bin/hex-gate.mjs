@@ -34,14 +34,24 @@ function normalize(hex) {
   return h;
 }
 
+const USAGE = 'usage: verseva-hex-gate --tokens <tokens.css> [--tokens ...] [--allow <substr>] <paths...>';
+
+function usage() {
+  console.error(USAGE);
+  process.exit(2);
+}
+
 function parseArgs(argv) {
   const tokens = [];
   const allow = [];
   const paths = [];
   for (let i = 0; i < argv.length; i++) {
-    if (argv[i] === '--tokens') tokens.push(argv[++i]);
-    else if (argv[i] === '--allow') allow.push(argv[++i]);
-    else paths.push(argv[i]);
+    const arg = argv[i];
+    if (arg === '--tokens' || arg === '--allow') {
+      const value = argv[++i];
+      if (value === undefined || value.startsWith('--')) usage();
+      (arg === '--tokens' ? tokens : allow).push(value);
+    } else paths.push(arg);
   }
   return { tokens, allow, paths };
 }
@@ -71,7 +81,6 @@ function hexesIn(text) {
   return found;
 }
 
-const USAGE = 'usage: verseva-hex-gate --tokens <tokens.css> [--tokens ...] [--allow <substr>] <paths...>';
 const argv = process.argv.slice(2);
 if (argv.includes('--help') || argv.includes('-h')) {
   console.log(USAGE);
@@ -84,9 +93,12 @@ if (argv.includes('--version') || argv.includes('-v')) {
 }
 
 const { tokens, allow, paths } = parseArgs(argv);
-if (tokens.length === 0 || paths.length === 0) {
-  console.error(USAGE);
-  process.exit(2);
+if (tokens.length === 0 || paths.length === 0) usage();
+for (const p of [...tokens, ...paths]) {
+  if (!fs.existsSync(p)) {
+    console.error(`verseva-hex-gate: not found: ${p}`);
+    process.exit(2);
+  }
 }
 
 const allowed = new Set();

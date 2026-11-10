@@ -66,6 +66,36 @@ test('directory scan walks and skips node_modules', () => {
   assert.doesNotMatch(r.out, /node_modules/);
 });
 
+const noStack = (out) => assert.doesNotMatch(out, /^\s+at /m);
+
+test('trailing --tokens with no value exits 2 with usage', () => {
+  const r = run(['--tokens']);
+  assert.equal(r.code, 2);
+  assert.match(r.out, /usage:/);
+  noStack(r.out);
+});
+
+test('trailing --tokens after valid args exits 2 with usage', () => {
+  const r = run([...TOKENS, fx('proj'), '--tokens']);
+  assert.equal(r.code, 2);
+  assert.match(r.out, /usage:/);
+  noStack(r.out);
+});
+
+test('missing tokens file exits 2 and names the path', () => {
+  const r = run(['--tokens', 'nope.css', fx('proj')]);
+  assert.equal(r.code, 2);
+  assert.match(r.out, /not found: nope\.css/);
+  noStack(r.out);
+});
+
+test('missing scan path exits 2 and names the path', () => {
+  const r = run([...TOKENS, 'nope/']);
+  assert.equal(r.code, 2);
+  assert.match(r.out, /not found: nope\//);
+  noStack(r.out);
+});
+
 test('directory scan skips generated output dirs', () => {
   const r = run([...TOKENS, fx('proj-skip')]);
   assert.equal(r.code, 0, r.out);
