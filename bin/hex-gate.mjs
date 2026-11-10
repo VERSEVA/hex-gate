@@ -41,7 +41,8 @@ function normalize(hex) {
 
 const USAGE = 'usage: verseva-hex-gate --tokens <tokens.css> [--tokens ...] [--allow <substr>] <paths...>';
 
-function usage() {
+function usage(message) {
+  if (message) console.error(`verseva-hex-gate: ${message}`);
   console.error(USAGE);
   process.exit(2);
 }
@@ -56,7 +57,8 @@ function parseArgs(argv) {
       const value = argv[++i];
       if (value === undefined || value.startsWith('--')) usage();
       (arg === '--tokens' ? tokens : allow).push(value);
-    } else paths.push(arg);
+    } else if (arg.startsWith('-')) usage(`unknown option: ${arg}`);
+    else paths.push(arg);
   }
   return { tokens, allow, paths };
 }
