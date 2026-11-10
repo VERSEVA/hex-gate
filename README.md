@@ -41,6 +41,31 @@ Wire it ahead of your build:
 }
 ```
 
+### GitHub Actions
+
+```yaml
+jobs:
+  hex-gate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npx --yes @verseva/hex-gate --tokens src/tokens.css --tokens src/theme.css src
+```
+
+### Pre-commit hook
+
+Save as `.git/hooks/pre-commit` and `chmod +x` it:
+
+```sh
+#!/bin/sh
+npx --no-install verseva-hex-gate --tokens src/tokens.css --tokens src/theme.css src
+```
+
+A non-zero exit (`1` violations, `2` usage error) blocks the commit.
+
 ## Flags
 
 - `--tokens <tokens.css>`: tokens file whose hexes form the allowed set. Required; repeatable.
