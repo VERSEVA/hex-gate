@@ -41,6 +41,31 @@ Wire it ahead of your build:
 }
 ```
 
+### GitHub Actions
+
+```yaml
+jobs:
+  hex-gate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npx --yes @verseva/hex-gate --tokens src/tokens.css --tokens src/theme.css src
+```
+
+### Pre-commit hook
+
+Save as `.git/hooks/pre-commit` and `chmod +x` it:
+
+```sh
+#!/bin/sh
+npx --no-install verseva-hex-gate --tokens src/tokens.css --tokens src/theme.css src
+```
+
+A non-zero exit (`1` violations, `2` usage error) blocks the commit.
+
 ## Flags
 
 - `--tokens <tokens.css>`: tokens file whose hexes form the allowed set. Required; repeatable.
@@ -48,8 +73,9 @@ Wire it ahead of your build:
 - `--help`, `-h`: print the usage line to stdout and exit `0`.
 - `--version`, `-v`: print the package version and exit `0`.
 
-Anything else is treated as a path to scan, so an unknown option such as `--bogus` fails with
-`verseva-hex-gate: not found: --bogus` and exit `2`.
+Any other argument starting with `-` is an unknown option: `--bogus` fails with
+`verseva-hex-gate: unknown option: --bogus` followed by the usage line, and exit `2`.
+Everything else is treated as a path to scan.
 
 ## What it scans
 
@@ -62,6 +88,8 @@ Anything else is treated as a path to scan, so an unknown option such as `--bogu
 
 - **Tokens files define the allowed set.** Pass `--tokens` more than once (base tokens plus a
   brand theme). Hexes are normalized, so `#fff` authorizes `#ffffff` and vice versa.
+  Matching is case-insensitive: a token written `#12E4B0` authorizes `#12e4b0` in source and
+  vice versa.
 - **Empty allowed set warns.** If the `--tokens` files contain no hex literals at all (say,
   colors defined only as `rgb()`, `hsl()` or `oklch()`), the gate prints
   `verseva-hex-gate: warning: no hex values found in --tokens files (<files>)` to stderr.

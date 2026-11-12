@@ -47,6 +47,15 @@ test('tailwind arbitrary value in tsx is caught', () => {
   assert.match(r.out, /#12E4B0/i);
 });
 
+test('every documented extension is scanned; .md and .json are ignored', () => {
+  const documented = ['.css', '.scss', '.ts', '.tsx', '.js', '.jsx', '.mjs', '.cjs', '.html'];
+  const r = run([...TOKENS, fx('exts')]);
+  assert.equal(r.code, 1, r.out);
+  const reported = [...r.out.matchAll(/^ {2}(.+):\d+ {2}#A1B2C3$/gm)].map((m) => path.extname(m[1]));
+  assert.deepEqual(reported.sort(), [...documented].sort());
+  assert.doesNotMatch(r.out, /notes\.md|data\.json/);
+});
+
 test('hex-ok marker suppresses the line', () => {
   const r = run([...TOKENS, fx('proj', 'marked.css')]);
   assert.equal(r.code, 0);
@@ -80,6 +89,21 @@ test('--allow skips the file', () => {
   assert.equal(r.code, 0);
 });
 
+test('--allow is repeatable: each substring skips its file, others still fail', () => {
+  const r = run([
+    ...TOKENS,
+    '--allow', 'legacy',
+    '--allow', 'third-party',
+    fx('proj-allow'),
+    fx('proj-allow-extra'),
+  ]);
+  assert.equal(r.code, 1, r.out);
+  const findings = r.out.split('\n').filter((l) => /\.css:\d+/.test(l));
+  assert.equal(findings.length, 1, r.out);
+  assert.match(findings[0], /off-token\.css:1\s+#FF00AA/i);
+  assert.doesNotMatch(r.out, /legacy-vendor\.css|third-party\.css/);
+});
+
 test('--allow does not match directories above cwd', () => {
   const r = run([...TOKENS, '--allow', 'legacy', '.'], { cwd: fx('legacy-root') });
   assert.equal(r.code, 1);
@@ -107,6 +131,22 @@ test('trailing --tokens after valid args exits 2 with usage', () => {
   assert.equal(r.code, 2);
   assert.match(r.out, /usage:/);
   noStack(r.out);
+});
+
+test('--tokens/--allow with a missing value or a following flag exit 2 with usage on stderr', () => {
+  const cases = [
+    ['--tokens'],
+    ['--tokens', '--allow', 'x', fx('proj')],
+    ['--allow'],
+    ['--allow', '--tokens', fx('tokens.css'), fx('proj')],
+  ];
+  for (const args of cases) {
+    const r = runSplit(args);
+    assert.equal(r.code, 2, args.join(' '));
+    assert.equal(r.stdout, '', args.join(' '));
+    assert.match(r.stderr, /^usage: verseva-hex-gate --tokens/m, args.join(' '));
+    noStack(r.stderr);
+  }
 });
 
 test('unknown option exits 2 naming the option, then usage', () => {
@@ -290,4 +330,92 @@ test('a hex in neither --tokens file is still a finding', () => {
   assert.match(r.stderr, /^verseva-hex-gate: 1 off-token hex\n/m);
   assert.match(r.stderr, /union-third\.css:3 {2}#7A8B9C$/m);
   assert.doesNotMatch(r.stderr, /#1A2B3C|#4D5E6F/);
+});
+
+test('a single file path does not scan sibling files', () => {
+  const r = run([...TOKENS, fx('siblings', 'good.css')]);
+  assert.equal(r.code, 0, r.out);
+  assert.doesNotMatch(r.out, /bad\.css/);
+  assert.doesNotMatch(r.out, /#FF00AA/i);
+});
+
+test('a single bad file path reports that file and not its sibling', () => {
+  const r = run([...TOKENS, fx('siblings', 'bad.css')]);
+  assert.equal(r.code, 1);
+  assert.match(r.out, /siblings[\\/]bad\.css:1 {2}#FF00AA/);
+  assert.doesNotMatch(r.out, /good\.css/);
+});
+
+test('hex matching is case-insensitive between tokens and source, both directions', () => {
+  const upper = runSplit(['--tokens', fx('cases', 'case-tokens-upper.css'), fx('cases', 'case-src-lower.css')]);
+  assert.equal(upper.code, 0, upper.stderr);
+  const lower = runSplit(['--tokens', fx('cases', 'case-tokens-lower.css'), fx('cases', 'case-src-upper.css')]);
+  assert.equal(lower.code, 0, lower.stderr);
+});
+
+// Temp dir holding its own tokens.css, an on-token good.css and, optionally,
+// an off-token bad.css. Scans the whole dir with --tokens pointing inside it.
+function scanWithTokensInside({ withBad }) {
+  const dir = fs.mkdtempSync(path.join(fs.realpathSync(os.tmpdir()), 'hex-gate-tokens-inside-'));
+  try {
+    fs.writeFileSync(path.join(dir, 'tokens.css'), ':root { --bg: #0B0D10; --accent: #BE8455; }\n');
+    fs.writeFileSync(path.join(dir, 'good.css'), '.a { color: #0B0D10; }\n');
+    if (withBad) fs.writeFileSync(path.join(dir, 'bad.css'), '.b { color: #FF00AA; }\n');
+    return spawnSync(process.execPath, [bin, '--tokens', path.join(dir, 'tokens.css'), dir], { encoding: 'utf8' });
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+}
+
+test('a --tokens file inside the scanned tree is not reported', () => {
+  const r = scanWithTokensInside({ withBad: false });
+  assert.equal(r.status, 0, r.stderr);
+  assert.equal(r.stdout, 'verseva-hex-gate: clean (2 token hexes authorized)\n');
+  assert.doesNotMatch(r.stderr, /tokens\.css:\d+/);
+});
+
+test('a --tokens file inside the scanned tree: only the off-token file is listed', () => {
+  const r = scanWithTokensInside({ withBad: true });
+  assert.equal(r.status, 1, r.stderr);
+  const findings = r.stderr.split('\n').filter((l) => /\.css:\d+/.test(l));
+  assert.equal(findings.length, 1, r.stderr);
+  assert.match(findings[0], /bad\.css:1 {2}#FF00AA$/);
+  assert.doesNotMatch(r.stderr, /tokens\.css:\d+/);
+});
+
+test('violations go to stderr only; the clean summary goes to stdout only', () => {
+  const bad = runSplit([...TOKENS, fx('proj', 'bad.css')]);
+  assert.equal(bad.code, 1);
+  assert.equal(bad.stdout, '');
+  assert.match(bad.stderr, /off-token/);
+
+  const clean = runSplit([...TOKENS, fx('proj-clean')]);
+  assert.equal(clean.code, 0, clean.stderr);
+  assert.equal(clean.stderr, '');
+  assert.match(clean.stdout, /^verseva-hex-gate: clean/);
+});
+
+test('symlinked directories, including a loop back to the parent, are not followed', (t) => {
+  const base = fs.mkdtempSync(path.join(fs.realpathSync(os.tmpdir()), 'hex-gate-dirlink-'));
+  try {
+    const dir = path.join(base, 'scan');
+    const outside = path.join(base, 'outside');
+    fs.mkdirSync(dir);
+    fs.mkdirSync(outside);
+    fs.writeFileSync(path.join(dir, 'clean.css'), '.a { color: #0B0D10; }\n');
+    fs.writeFileSync(path.join(outside, 'bad.css'), '.b { color: #FF00AA; }\n');
+    try {
+      fs.symlinkSync(outside, path.join(dir, 'linked'), 'dir');
+      fs.symlinkSync(dir, path.join(dir, 'loop'), 'dir');
+    } catch (e) {
+      if (e.code === 'EPERM') return t.skip('symlink creation not permitted');
+      throw e;
+    }
+    const r = spawnSync(process.execPath, [bin, ...TOKENS, dir], { encoding: 'utf8', timeout: 10000 });
+    assert.equal(r.error, undefined, 'scan did not terminate');
+    assert.equal(r.status, 0, r.stderr);
+    assert.doesNotMatch(`${r.stdout}${r.stderr}`, /bad\.css|#FF00AA/);
+  } finally {
+    fs.rmSync(base, { recursive: true, force: true });
+  }
 });
