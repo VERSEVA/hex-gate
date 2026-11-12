@@ -272,3 +272,22 @@ test('a single violation uses the singular "1 off-token hex"', () => {
   assert.match(r.stderr, /^verseva-hex-gate: 1 off-token hex\n/m);
   assert.doesNotMatch(r.stderr, /off-token hexes/);
 });
+
+const UNION_TOKENS = [
+  '--tokens', fx('cases', 'union-tokens-a.css'),
+  '--tokens', fx('cases', 'union-tokens-b.css'),
+];
+
+test('repeated --tokens authorizes the union of every tokens file', () => {
+  const r = runSplit([...UNION_TOKENS, fx('cases', 'union-both.css')]);
+  assert.equal(r.code, 0, r.stderr);
+  assert.equal(r.stdout, 'verseva-hex-gate: clean (2 token hexes authorized)\n');
+});
+
+test('a hex in neither --tokens file is still a finding', () => {
+  const r = runSplit([...UNION_TOKENS, fx('cases', 'union-third.css')]);
+  assert.equal(r.code, 1);
+  assert.match(r.stderr, /^verseva-hex-gate: 1 off-token hex\n/m);
+  assert.match(r.stderr, /union-third\.css:3 {2}#7A8B9C$/m);
+  assert.doesNotMatch(r.stderr, /#1A2B3C|#4D5E6F/);
+});
